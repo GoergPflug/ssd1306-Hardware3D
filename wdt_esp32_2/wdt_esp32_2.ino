@@ -787,7 +787,7 @@ void Calc3D() {
             float dy2 = y[2] - y[0];
             float cross_product = dx1 * dy2 - dy1 * dx2;
 
-            //if (cross_product > 0) 
+            if (cross_product > 0) 
             {
                 // Call the triangle function only for visible triangles
                 VectoscopeTriangle(x[0],y[0],x[1],y[1],x[2],y[2],0);
