@@ -1,3 +1,4 @@
+#define HLINE vectoscopeHline2_q
 /*notizen: reg: 0xe1:
   0 normal
   1:
@@ -1787,10 +1788,177 @@ void vectoscopeHline(s16 x1, s16 y1, s16 len, u8 c)
   i2c_counter += 2;
 }
 
+#define SEND_CMD(x) write_to_display (x,sizeof(x));
+
+void write_to_display(u8 *cmd_set,u8 l){
+  for (u8 i = 0; i < l; i++)
+  {
+    os_i2c_write_byte_fast(cmd_set[i]);//+(y1&63));
+    i2c_counter++;
+  }
+}
+void vectoscopeHline2 (s16 x1, s16 y1, s16 len, u8 c)
+{
+  if (y1 < 0)return;
+  if (y1 > 63)return;
+  if (x1 > 127)return;
+  if (x1 < 0)len += x1, x1 = 0;
+  if (len < 0)return;
+  if (x1 + len > 127)
+  {
+    len -= x1 + len - 127;
+  }
+
+
+
+  static u8 row = 0;
+
+  // 0x24,direction,row_start,clear_pixels,row_end,x_start,x_end,
+  const u8 cmd_clear[] = {
+    0x24, 0,
+    row,
+    0/* clear*/,
+    row,
+    0, 127,
+    //      0xe3,0xe3,0xe3,0xe3  , // clear line
+  };
+  const u8 cmd_set[] = {
+
+    0x24, 0, row, c/*set*/, row, x1, x1 + len,
+  };// set line
+
+  
+  const u8 cmd_move[] = {
+
+    0xd3, y1 & 63,
+    //   0x40//+62
+    // , 0xe3,0xe3  // move line
+  };      
+  SEND_CMD(cmd_clear);
+  
+  SEND_CMD(cmd_set);
+
+do_move:
+  
+  SEND_CMD(cmd_move);
+
+  
+}
+
+u8 __3d_accept_error =1;
+void vectoscopeHline2_q (s16 x1, s16 y1, s16 len, u8 c)
+{
+  if (y1 < 0)return;
+  if (y1 > 63)return;
+  if (x1 > 127)return;
+  if (x1 < 0)len += x1, x1 = 0;
+  if (len < 0)return;
+  if (x1 + len > 127)
+  {
+    len -= x1 + len - 127;
+  }
+
+
+
+  static u8 row = 0,last_x,last_end;
+
+  u8 error=abs(last_x-x1)+abs(last_end-x1-len);
+
+
+    if(error<__3d_accept_error)goto do_move;
+
+  // 0x24,direction,row_start,clear_pixels,row_end,x_start,x_end,
+  const u8 cmd_clear[] = {
+    0x24, 0,
+    row,
+    0/* clear*/,
+    row,
+    0, 127,
+    //      0xe3,0xe3,0xe3,0xe3  , // clear line
+  };
+  const u8 cmd_set[] = {
+
+    0x24, 0, row, c/*set*/, row, x1, x1 + len,
+  };// set line
+
+  
+
+  SEND_CMD(cmd_clear);
+  
+  SEND_CMD(cmd_set);
+  last_x=x1;
+  last_end=x1+len;
+do_move:
+
+  const u8 cmd_move[] = {
+    0xd3, y1 & 63,
+  };      
+
+  
+  SEND_CMD(cmd_move);
+
+  
+}
+
+
+
+
+void vectoscopeHline3 (s16 x1, s16 y1, s16 len, u8 c)
+{
+  if (y1 < 0)return;
+  if (y1 > 63)return;
+  if (x1 > 127)return;
+  if (x1 < 0)len += x1, x1 = 0;
+  if (len < 0)return;
+  if (x1 + len > 127)
+  {
+    len -= x1 + len - 127;
+  }
+
+
+
+  static u8 row = 0;
+
+  {
+  // 0x24,direction,row_start,clear_pixels,row_end,x_start,x_end,
+  const u8 cmd_clear[] = {
+    0x24, 0,
+    row,
+    0/* clear*/,
+    row,
+    0, 127,
+    //      0xe3,0xe3,0xe3,0xe3  , // clear line
+  };
+  const u8 cmd_set[] = {
+
+    0x24, 0, row, c/*set*/, row, x1, x1 + len,
+  };// set line
+
+  
+  const u8 cmd_move[] = {
+
+    0xd3, y1 & 63,
+    //   0x40//+62
+    // , 0xe3,0xe3  // move line
+  };      
+  SEND_CMD(cmd_clear);
+  
+  SEND_CMD(cmd_set);
+
+do_move:
+  
+  SEND_CMD(cmd_move);
+  }
+  row++;
+  
+}
+
+
+
 
 void VectoscopeTriangle(s16 x1, s16 y1, s16 x2, s16 y2, s16 x3, s16 y3, u8 c)
 {
-  cli();
+//  cli();
 
   if (x2 < 0)return;
   if (x2 > 126)return;
@@ -1812,6 +1980,8 @@ void VectoscopeTriangle(s16 x1, s16 y1, s16 x2, s16 y2, s16 x3, s16 y3, u8 c)
   os_i2c_write_byte(SSD1306_ADDRESS);
   os_i2c_write_byte(0x0);  // command mode
   os_i2c_write_byte(0x40);  // command mode
+  os_i2c_write_byte(0xd2);  // command mode
+  os_i2c_write_byte(0x4);  // command mode
 
   s16 t1x, t2x, y, minx, maxx, t1xp, t2xp;
   u8 change = 0;
@@ -1820,7 +1990,7 @@ void VectoscopeTriangle(s16 x1, s16 y1, s16 x2, s16 y2, s16 x3, s16 y3, u8 c)
   //note: x and y are swapped to get better organization of the line
 
   int i;
-  //for(i=20;i<40;i++)vectoscopeHline(30,i,20,0);
+  //for(i=20;i<40;i++)HLINE(30,i,20,0);
   //return;
   minx = y1;
   if (y2 < minx)minx = y2;
@@ -1946,7 +2116,7 @@ next2:
     if (maxx < t1x) maxx = t1x;
     if (maxx < t2x) maxx = t2x;
     //*/
-    vectoscopeHline(minx, y, maxx - minx, c);
+    HLINE(minx, y, maxx - minx, c);
     //   x_vline(minx, y, maxx, c, linebuffer);  // Draw line from min to max points found on the y
     //   if (y == terminate_line)return;
     // Now increase y
@@ -2039,7 +2209,7 @@ next4:
     if (maxx < t1x) maxx = t1x;
     if (maxx < t2x) maxx = t2x;
     //  */
-    vectoscopeHline(minx, y, maxx - minx, c);
+    HLINE(minx, y, maxx - minx, c);
 
     //    x_vline(minx, y, maxx, c, linebuffer);  // Draw line from min to max points found on the y
     //    if (y == terminate_line)return;

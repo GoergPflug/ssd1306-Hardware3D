@@ -1,0 +1,314 @@
+#include <stdio.h>
+#include <math.h>
+#include <avr/io.h>
+#include <stdfix.h>
+
+
+typedef struct {
+	accum x;
+	accum y;
+	accum z;
+} Vector3;
+
+typedef struct {
+  accum x;
+  accum y;
+  accum z;
+  accum w;
+} Vector4;
+#include <stdint.h>
+#include <stdint.h>
+
+
+
+#include <stdint.h>
+
+
+
+accum sqrt_fixed(accum xx) {
+
+    unsigned int x;
+    *(accum*)(&x)=xx;
+  
+    if (x == 0) {
+        return 0;
+    }
+
+    uint8_t prev[2];
+    uint8_t curr[2];
+    curr[0] = (uint8_t)(x >> 8);    // Upper byte of x
+    curr[1] = (uint8_t)x;           // Lower byte of x
+
+    __asm__ __volatile__(
+        "1:\n\t"
+        "ld %[reg26], %a[curr]\n\t"            // Load the lower byte of curr into r26
+        "ldd %[reg27], %a[curr]+1\n\t"          // Load the upper byte of curr into r27
+        "eor %[reg30], %[reg30]\n\t"                 // Clear the lower byte of the current approximation
+        "eor %[reg31], %[reg31]\n\t"                 // Clear the upper byte of the current approximation
+        "add %[reg30], %[reg26]\n\t"                 // Add the lower byte of curr to the current approximation
+        "adc %[reg31], %[reg27]\n\t"                 // Add the upper byte of curr to the current approximation (with carry)
+        "asr %[reg31]\n\t"                      // Arithmetic shift right on r31 (division by 2)
+        "ror %[reg30]\n\t"                      // Rotate right on r30 (division by 2)
+        "ld %[reg26], %a[prev]\n\t"             // Load the lower byte of prev into r26
+        "ldd %[reg27], %a[prev]+1\n\t"           // Load the upper byte of prev into r27
+        "add %[reg30], %[reg26]\n\t"                 // Add the lower byte of prev to the current approximation
+        "adc %[reg31], %[reg27]\n\t"                 // Add the upper byte of prev to the current approximation (with carry)
+        "asr %[reg31]\n\t"                      // Arithmetic shift right on r31 (division by 2)
+        "ror %[reg30]\n\t"                      // Rotate right on r30 (division by 2)
+        "st %a[curr], %[reg30]\n\t"             // Store the lower byte of the current approximation
+        "st %a[curr]+1, %[reg31]\n\t"           // Store the upper byte of the current approximation
+        "ld %[reg26], %a[prev]\n\t"             // Load the lower byte of prev into r26
+        "ldd %[reg27], %a[prev]+1\n\t"           // Load the upper byte of prev into r27
+        "cp %[reg30], %[reg26]\n\t"                  // Compare the lower byte of prev and curr
+        "cpc %[reg31], %[reg27]\n\t"                 // Compare the upper byte of prev and curr (with carry)
+        "brne 1b\n\t"                      // Branch to label 1 if not equal (loop)
+        :
+        : [curr] "e" (curr), [prev] "e" (prev), [reg26] "r" (0), [reg27] "r" (0), [reg30] "r" (0), [reg31] "r" (0)
+        : "r26", "r27", "r30", "r31"
+    );
+
+    return (accum)(((uint16_t)curr[0] << 8) | curr[1]);
+}
+
+accum xsqrt_fixed(accum x) {
+    if (x == 0) {
+        return 0;
+    }
+
+    accum prev, curr = x / 2;
+
+    do {
+        prev = curr;
+        curr = (prev + x / prev) / 2;
+    } while (prev != curr);
+
+    return curr;
+}
+
+
+typedef struct {
+	accum m[4][4];
+} Matrix4;
+
+Matrix4 lookAtRH(Vector3 eye, Vector3 center, Vector3 up) {
+	Vector3 f = {
+		center.x - eye.x,
+		center.y - eye.y,
+		center.z - eye.z
+	};
+	accum fLength = sqrtf(f.x * f.x + f.y * f.y + f.z * f.z);
+	f.x /= fLength;
+	f.y /= fLength;
+	f.z /= fLength;
+
+	Vector3 s = {
+		f.z,
+		0.0f,
+		-f.x
+	};
+	accum sLength = sqrtf(s.x * s.x + s.y * s.y + s.z * s.z);
+	s.x /= sLength;
+	s.y /= sLength;
+	s.z /= sLength;
+
+	Vector3 u = {
+		s.y * f.z - s.z * f.y,
+		s.z * f.x - s.x * f.z,
+		s.x * f.y - s.y * f.x
+	};
+
+	Matrix4 result;
+	result.m[0][0] = s.x;
+	result.m[1][0] = s.y;
+	result.m[2][0] = s.z;
+	result.m[0][1] = u.x;
+	result.m[1][1] = u.y;
+	result.m[2][1] = u.z;
+	result.m[0][2] = -f.x;
+	result.m[1][2] = -f.y;
+	result.m[2][2] = -f.z;
+	result.m[3][0] = -s.x * eye.x - s.y * eye.y - s.z * eye.z;
+	result.m[3][1] = -u.x * eye.x - u.y * eye.y - u.z * eye.z;
+	result.m[3][2] = f.x * eye.x + f.y * eye.y + f.z * eye.z;
+	result.m[0][3] = 0.0f;
+	result.m[1][3] = 0.0f;
+	result.m[2][3] = 0.0f;
+	result.m[3][3] = 1.0f;
+
+	return result;
+}
+Vector3 transformPoint(Matrix4 matrix, Vector3 point) {
+    Vector4 result;
+    result.x = matrix.m[0][0] * point.x + matrix.m[1][0] * point.y + matrix.m[2][0] * point.z + matrix.m[3][0];
+    result.y = matrix.m[0][1] * point.x + matrix.m[1][1] * point.y + matrix.m[2][1] * point.z + matrix.m[3][1];
+    result.z = matrix.m[0][2] * point.x + matrix.m[1][2] * point.y + matrix.m[2][2] * point.z + matrix.m[3][2];
+    result.w = matrix.m[0][3] * point.x + matrix.m[1][3] * point.y + matrix.m[2][3] * point.z + matrix.m[3][3];
+
+    Vector3 transformedPoint;
+    transformedPoint.x = result.x / result.w;
+    transformedPoint.y = result.y / result.w;
+    transformedPoint.z = result.z / result.w;
+
+    return transformedPoint;
+}
+
+Vector3 xtransformPoint(Matrix4 matrix, Vector3 point) {
+	Vector3 result;
+	result.x = matrix.m[0][0] * point.x + matrix.m[1][0] * point.y + matrix.m[2][0] * point.z + matrix.m[3][0];
+	result.y = matrix.m[0][1] * point.x + matrix.m[1][1] * point.y + matrix.m[2][1] * point.z + matrix.m[3][1];
+	result.z = matrix.m[0][2] * point.x + matrix.m[1][2] * point.y + matrix.m[2][2] * point.z + matrix.m[3][2];
+
+
+	return result;
+}
+
+Vector3 transformPointxx(Matrix4 matrix, Vector3 point) {
+    Vector3 result;
+
+    asm volatile (
+        "clr r30\n"             // Clear result accumulator (low byte)
+        "clr r31\n"             // Clear result accumulator (high byte)
+
+        // Calculate result.x
+        "ldi r24, 0\n"          // Initialize shift counter
+        "ldi r25, 8\n"          // Set shift limit to 8
+
+        "shift_loop_x:\n"
+        "rol r0\n"              // Shift the least significant byte of matrix.m[0][0]
+        "ror r1\n"              // Shift the most significant byte of matrix.m[0][0]
+        "rol r2\n"              // Shift the least significant byte of point.x
+        "ror r3\n"              // Shift the most significant byte of point.x
+
+        "dec r25\n"             // Decrement shift counter
+        "brne shift_loop_x\n"   // Repeat until shift limit is reached
+
+        "add r30, r0\n"         // Add the low byte of matrix.m[0][0] * point.x to the accumulator
+        "adc r31, r1\n"         // Add the high byte of matrix.m[0][0] * point.x to the accumulator
+        "adc r31, r30\n"        // Add carry from low byte addition to the high byte
+
+        "clr r30\n"             // Clear result accumulator (low byte)
+        "clr r31\n"             // Clear result accumulator (high byte)
+
+        // Calculate result.y
+        "ldi r24, 0\n"          // Initialize shift counter
+        "ldi r25, 8\n"          // Set shift limit to 8
+
+        "shift_loop_y:\n"
+        "rol r4\n"              // Shift the least significant byte of matrix.m[1][0]
+        "ror r5\n"              // Shift the most significant byte of matrix.m[1][0]
+        "rol r2\n"              // Shift the least significant byte of point.y
+        "ror r3\n"              // Shift the most significant byte of point.y
+
+        "dec r25\n"             // Decrement shift counter
+        "brne shift_loop_y\n"   // Repeat until shift limit is reached
+
+        "add r30, r4\n"         // Add the low byte of matrix.m[1][0] * point.y to the accumulator
+        "adc r31, r5\n"         // Add the high byte of matrix.m[1][0] * point.y to the accumulator
+        "adc r31, r30\n"        // Add carry from low byte addition to the high byte
+
+        "clr r30\n"             // Clear result accumulator (low byte)
+        "clr r31\n"             // Clear result accumulator (high byte)
+
+        // Calculate result.z
+        "ldi r24, 0\n"          // Initialize shift counter
+        "ldi r25, 8\n"          // Set shift limit to 8
+
+        "shift_loop_z:\n"
+        "rol r6\n"              // Shift the least significant byte of matrix.m[2][0]
+        "ror r7\n"              // Shift the most significant byte of matrix.m[2][0]
+        "rol r2\n"              // Shift the least significant byte of point.z
+        "ror r3\n"              // Shift the most significant byte of point.z
+
+        "dec r25\n"             // Decrement shift counter
+        "brne shift_loop_z\n"   // Repeat until shift limit is reached
+
+        "add r30, r6\n"         // Add the low byte of matrix.m[2][0] * point.z to the accumulator
+        "adc r31, r7\n"         // Add the high byte of matrix.m[2][0] * point.z to the accumulator
+        "adc r31, r30\n"        // Add carry from low byte addition to the high byte
+
+        // Store the results
+        "st x+, r30\n"          // Store result.x
+        "st x+, r31\n"
+        "st x+, r30\n"          // Store result.y
+        "st x+, r31\n"
+        "st x+, r30\n"          // Store result.z
+        "st x+, r31\n"
+
+        :
+        : "x"(&result), "r"(&matrix), "r"(&point)
+        : "r24", "r25", "r30", "r31", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"
+    );
+
+    return result;
+}
+#include <avr/io.h>
+
+void matrixMultiply(int16_t matrixA[4][4], int16_t matrixB[4][4], int16_t result[4][4]) {
+    asm volatile (
+        "ldi r26, 0\n"          // Initialize outer loop counter
+        
+        "outer_loop:\n"
+        "ldi r27, 0\n"          // Initialize inner loop counter
+        
+        "inner_loop:\n"
+        "clr r30\n"             // Clear result accumulator (low byte)
+        "clr r31\n"             // Clear result accumulator (high byte)
+        
+        "ldi r24, 0\n"          // Initialize shift counter
+        "ldi r25, 8\n"          // Set shift limit to 8
+        
+        "shift_loop:\n"
+        "rol r0\n"              // Shift the least significant byte of A (matrixA[r26][r24])
+        "ror r1\n"              // Shift the most significant byte of A (matrixA[r26][r24])
+        "rol r2\n"              // Shift the least significant byte of B (matrixB[r24][r27])
+        "ror r3\n"              // Shift the most significant byte of B (matrixB[r24][r27])
+        
+        "dec r25\n"             // Decrement shift counter
+        "brne shift_loop\n"     // Repeat until shift limit is reached
+        
+        "add r30, r0\n"         // Add the low byte of A * B to the accumulator
+        "adc r31, r1\n"         // Add the high byte of A * B to the accumulator
+        "adc r31, r30\n"        // Add carry from low byte addition to the high byte
+        
+        "adiw r30, 1\n"         // Increment result pointer (low byte)
+        "adc r31, r26\n"        // Add carry from low byte increment to the high byte
+        
+        "inc r24\n"             // Increment inner loop counter
+        "cpi r24, 4\n"          // Check if inner loop counter has reached 4
+        "brne inner_loop\n"     // Repeat until inner loop counter reaches 4
+        
+        "adiw r26, 2\n"         // Increment outer loop counter (increment by 2 to account for int16_t)
+        "cpi r26, 8\n"          // Check if outer loop counter has reached 8
+        "brne outer_loop\n"     // Repeat until outer loop counter reaches 8
+        
+        :
+        : "z"(&matrixA[0][0]), "z"(&matrixB[0][0]), "z"(&result[0][0])
+        : "r24", "r25", "r26", "r27", "r30", "r31"
+    );
+}
+
+
+void cmain(char *obuf) {
+	Vector3 eye = { 0.0f, 0.0f, 0.0f };
+	Vector3 center = { 2.0f, 0.0f, 0.0f };
+	Vector3 up = { 0.0f, 1.0f, 0.0f };
+
+	Matrix4 cameraMatrix = lookAtRH(eye, center, up);
+
+	// Example point
+	Vector3 point = { 3.0f, 1.0f, 1.0f }; // Expected result: (0.00, 0.00, 0.00)
+
+	// Transform the point
+	Vector3 transformedPoint = transformPoint(cameraMatrix, point);
+
+	// Print the transformed point and the expected result
+  int a,b,c;
+  
+  a=100*  transformedPoint.x,b=100* transformedPoint.y, 100* transformedPoint.z;
+
+
+
+	sprintf(obuf,"Point transformed: %d, %d, %d  %d %d\n", a,b,c,(int)(sqrt_fixed(2)*100k),sizeof(accum));
+	printf("Expected result:   0.00, 0.00, 0.00\n");
+
+}

@@ -1,4 +1,4 @@
-#define HLINE vectoscopeHline2_q
+#define HLINE vectoscopeHline2_q2
 /*notizen: reg: 0xe1:
   0 normal
   1:
@@ -1397,24 +1397,100 @@ int _manage_battery() {
 #ifndef GfxApiLayerGetNextByteInlineHack
 #define GfxApiLayerGetNextByteInlineHack
 
-
+#define __NOP1__ asm volatile ("nop");
+#define __NOP2__ 
+//asm volatile ("nop");
 
 static void os_i2c_write_byte_fast (u8 byte)
 {
   u8 bitpos = 0x80;
-
-  do {
-    os_i2c_scl_low();
-    if (byte & bitpos)
-      os_i2c_sda_high();
-    else
-      os_i2c_sda_low();
-
-    os_i2c_scl_high();
-    bitpos >>= 1;
-  } while (bitpos);
   os_i2c_scl_low();
 
+
+    
+    os_i2c_scl_low_ppull();
+    if (byte & bitpos)
+      os_i2c_sda_high_ppull();
+    else
+      os_i2c_sda_low_ppull();
+__NOP1__
+    os_i2c_scl_high_ppull();
+    bitpos >>= 1;
+
+
+    os_i2c_scl_low_ppull();
+    if (byte & bitpos)
+      os_i2c_sda_high_ppull();
+    else
+      os_i2c_sda_low_ppull();
+__NOP1__
+    os_i2c_scl_high_ppull();
+    bitpos >>= 1;
+
+    os_i2c_scl_low_ppull();
+    if (byte & bitpos)
+      os_i2c_sda_high_ppull();
+    else
+      os_i2c_sda_low_ppull();
+__NOP1__
+    os_i2c_scl_high_ppull();
+    bitpos >>= 1;
+
+    os_i2c_scl_low_ppull();
+    if (byte & bitpos)
+      os_i2c_sda_high_ppull();
+    else
+      os_i2c_sda_low_ppull();
+__NOP1__
+    os_i2c_scl_high_ppull();
+    bitpos >>= 1;
+
+    os_i2c_scl_low_ppull();
+    if (byte & bitpos)
+      os_i2c_sda_high_ppull();
+    else
+      os_i2c_sda_low_ppull();
+__NOP1__
+    os_i2c_scl_high_ppull();
+    bitpos >>= 1;
+
+    os_i2c_scl_low_ppull();
+    if (byte & bitpos)
+      os_i2c_sda_high_ppull();
+    else
+      os_i2c_sda_low_ppull();
+__NOP1__
+    os_i2c_scl_high_ppull();
+    bitpos >>= 1;
+
+    os_i2c_scl_low_ppull();
+    if (byte & bitpos)
+      os_i2c_sda_high_ppull();
+    else
+      os_i2c_sda_low_ppull();
+__NOP1__
+    os_i2c_scl_high_ppull();
+    bitpos >>= 1;
+
+    os_i2c_scl_low_ppull();
+    if (byte & bitpos)
+        {
+        
+          os_i2c_sda_high_ppull();   //transition open drain
+          os_i2c_sda_high();
+          os_i2c_sda_low_ppull();
+        }
+        
+    else{
+      os_i2c_sda_low_ppull();
+__NOP1__}
+    os_i2c_scl_high_ppull();
+    bitpos >>= 1;
+
+  os_i2c_scl_low_ppull();
+
+  
+  os_i2c_sda_low_ppull();
   os_i2c_sda_high();
   os_i2c_scl_high();;
   __NOP__;
@@ -1423,6 +1499,177 @@ static void os_i2c_write_byte_fast (u8 byte)
 
   os_i2c_sda_low();
 }
+
+#define FASTER_NOPS asm volatile("nop");asm volatile("nop");asm volatile("nop");asm volatile("nop");
+
+static void os_i2c_write_byte_faster (u8 i2c_data_out)
+{
+      os_i2c_sda_high_ppull();
+      FASTER_NOPS
+      FASTER_NOPS
+      FASTER_NOPS
+      if (i2c_data_out & 0x80)
+      {
+        os_i2c_sda_high_ppull();
+      }
+      else
+      {
+        os_i2c_sda_low_ppull();
+
+      }
+      i2c_data_out <<= 1;
+
+      FASTER_NOPS;
+      FASTER_NOPS;
+      os_i2c_scl_high_ppull();
+      FASTER_NOPS;
+      FASTER_NOPS;
+
+if (i2c_data_out & 0x80)
+      {
+        os_i2c_sda_high_ppull();
+      }
+      else
+      {
+        os_i2c_sda_low_ppull();
+
+      }
+      i2c_data_out <<= 1;
+
+      FASTER_NOPS;
+      FASTER_NOPS;
+      os_i2c_scl_high_ppull();
+      FASTER_NOPS;
+      FASTER_NOPS;
+if (i2c_data_out & 0x80)
+      {
+        os_i2c_sda_high_ppull();
+      }
+      else
+      {
+        os_i2c_sda_low_ppull();
+
+      }
+      i2c_data_out <<= 1;
+
+      FASTER_NOPS;
+      FASTER_NOPS;
+      os_i2c_scl_high_ppull();
+      FASTER_NOPS;
+      FASTER_NOPS;
+if (i2c_data_out & 0x80)
+      {
+        os_i2c_sda_high_ppull();
+      }
+      else
+      {
+        os_i2c_sda_low_ppull();
+
+      }
+      i2c_data_out <<= 1;
+
+      FASTER_NOPS;
+      FASTER_NOPS;
+      os_i2c_scl_high_ppull();
+      FASTER_NOPS;
+      FASTER_NOPS;
+if (i2c_data_out & 0x80)
+      {
+        os_i2c_sda_high_ppull();
+      }
+      else
+      {
+        os_i2c_sda_low_ppull();
+
+      }
+      i2c_data_out <<= 1;
+
+      FASTER_NOPS;
+      FASTER_NOPS;
+      os_i2c_scl_high_ppull();
+      FASTER_NOPS;
+      FASTER_NOPS;
+if (i2c_data_out & 0x80)
+      {
+        os_i2c_sda_high_ppull();
+      }
+      else
+      {
+        os_i2c_sda_low_ppull();
+
+      }
+      i2c_data_out <<= 1;
+
+      FASTER_NOPS;
+      FASTER_NOPS;
+      os_i2c_scl_high_ppull();
+      FASTER_NOPS;
+      FASTER_NOPS;
+
+
+
+// letztes bit
+      if (i2c_data_out & 0x80)
+      {
+        os_i2c_sda_high_ppull();
+#ifdef __AVR__
+/////////////////////////////        if (or_bit == 128)
+        {
+          os_i2c_sda_high();
+          os_i2c_sda_low_ppull();
+
+        }
+#endif
+      }
+      else
+      {
+        os_i2c_sda_low_ppull();
+
+      }
+      i2c_data_out <<= 1;
+
+      FASTER_NOPS;
+      FASTER_NOPS;
+      os_i2c_scl_high_ppull();
+      FASTER_NOPS;
+      FASTER_NOPS;
+
+
+
+
+  /*{
+    u8 bitpos = 0x1;
+    
+    os_i2c_scl_low();
+    if (byte & bitpos)
+      os_i2c_sda_high();
+    else
+      os_i2c_sda_low();
+
+    os_i2c_scl_high();
+    
+  }*/
+//nops..
+  
+  
+  
+  
+  
+  os_i2c_scl_low();
+
+  os_i2c_sda_high();
+  os_i2c_scl_high();;
+  FASTER_NOPS;
+  FASTER_NOPS;
+  os_i2c_scl_low();
+  //    __NOP__;
+
+  os_i2c_sda_low();
+}
+
+
+
+
 
 #define SEND_CMD(x) write_to_display (x,sizeof(x));
 
@@ -1664,6 +1911,7 @@ u8 add_40h = 0;
 
 void vectoscopeHline(s16 x1, s16 y1, s16 len, u8 c)
 {
+  /*
   if (y1 < 0)return;
   if (y1 > 63)return;
   if (x1 > 127)return;
@@ -1673,6 +1921,22 @@ void vectoscopeHline(s16 x1, s16 y1, s16 len, u8 c)
   {
     len -= x1 + len - 127;
   }
+*/
+
+  
+  x1-=64;
+  y1-=96;
+  u8 x2=x1+len;
+  
+  if(x1<0)x1=0;
+  if(x1>127)x1=127;
+
+//  x2-=64;
+  if(x2<0)x2=0;
+  if(x2>127)x2=127;
+
+  len=x2-x1;
+
 
   static int last_xstart;
   static int last_xend;
@@ -1844,7 +2108,7 @@ do_move:
 
   
 }
-
+u8 ___gpu_hline_is_black =1;
 u8 __3d_accept_error =1;
 void vectoscopeHline2_q (s16 x1, s16 y1, s16 len, u8 c)
 {
@@ -1900,8 +2164,131 @@ do_move:
   
 }
 
+int row_contract=0;
+int row_expand=0;
+int row_clear=0;
+int row_single_pixel_move=0;
+int row_equal=0;
+int row_fallthroug=0;
 
-void vectoscopeHline3 (s16 x1, s16 y1, s16 len, u8 c)
+
+void vectoscopeHline2_q2 (s16 x1, s16 y1, s16 len, u8 c)
+{
+
+
+  x1-=64;
+  y1-=96;
+  u8 x2=x1+len;
+  
+  if(x1<0)x1=0;
+  if(x1>127)x1=127;
+
+//  x2-=64;
+  if(x2<0)x2=0;
+  if(x2>127)x2=127;
+
+  len=x2-x1;
+
+
+  static u8 row = 0,last_x,last_end;
+
+  u8 error=abs(last_x-x1)+abs(last_end-x1-len);
+  if(___gpu_hline_is_black)error=len;
+
+    if(error<__3d_accept_error)goto do_move;
+
+  // 0x24,direction,row_start,clear_pixels,row_end,x_start,x_end,
+  const u8 cmd_clear[] = {
+    0x24, 0,
+    row,
+    0/* clear*/,
+    row,
+    0, 127,
+    //      0xe3,0xe3,0xe3,0xe3  , // clear line
+  };
+  const u8 cmd_set[] = {
+
+    0x24, 0, row, c/*set*/, row, x1, x1 + len,
+  };// set line
+
+
+// 13200 davor
+
+// "degenerate....."
+  if(len<2)
+  {
+    row_single_pixel_move++;
+   if(!___gpu_hline_is_black) 
+   SEND_CMD(cmd_clear);  //hack
+    ___gpu_hline_is_black=1;
+    goto do_set_var;   // todo write move
+  }
+//*/
+  u8 expand_right=0;
+  if(x1+len>=last_end)expand_right=1;
+  u8 expand_left=0;
+  if(x1<=last_x)expand_left=1;
+
+
+// check expand, equal
+  if(expand_right&expand_left)
+  {
+    if((x1==last_x)&&(x1+len==last_end))
+    {
+      row_equal++;
+      goto do_set_var;
+    }
+    row_expand++;
+    goto do_set_line;
+    
+  }
+    
+  // check contract row
+  u8 contract_right = 0;
+  if (x1 + len <= last_end)
+      contract_right = 1;
+  
+  u8 contract_left = 0;
+  if (x1 >= last_x)
+      contract_left = 1;
+
+  if(contract_right&contract_left)
+  {
+    const u8 cmd_contract[] = {   0x24, 0, row, 0
+    //clear
+    , row,  x1 + len,x1};
+    SEND_CMD(cmd_contract);
+    row_contract++;
+
+    goto do_set_var;
+  }
+//  */
+  row_clear++;
+  row_fallthroug++;
+  if(!___gpu_hline_is_black) 
+   SEND_CMD(cmd_clear);  //hack
+  
+do_set_line:
+  ___gpu_hline_is_black=0;
+  
+  SEND_CMD(cmd_set);
+do_set_var:
+
+  last_x=x1;
+  last_end=x1+len;
+do_move:
+
+  const u8 cmd_move[] = {
+    0xd3, y1 & 63,
+  };      
+
+  
+  SEND_CMD(cmd_move);
+
+  
+}
+
+void vectoscopeHline3 (s16 x1, s16 y1, s16 len, u8 c,u8 quality)
 {
   if (y1 < 0)return;
   if (y1 > 63)return;
@@ -1952,11 +2339,299 @@ do_move:
 }
 
 
+static void fillTriangle_clip(u8 x1,u8 y1,u8 x2,u8 y2,u8 x3,u8 y3, u8 c,u8 quality) {
+  u8 t1x,t2x,y,minx,maxx,t1xp,t2xp;
+  u8 change=0;
 
 
-void VectoscopeTriangle(s16 x1, s16 y1, s16 x2, s16 y2, s16 x3, s16 y3, u8 c)
+
+
+  
+  ___gpu_hline_is_black=1;// it was cleared at the end of the last triangle so we can assume this
+
+
+    const u8 eterm_backup=__3d_accept_error;
+  s16 eterm=eterm_backup;
+  eterm-=quality;
+  if (eterm<0)eterm=0;
+  __3d_accept_error=eterm;
+
+  os_i2c_start();
+  os_i2c_write_byte(SSD1306_ADDRESS);
+  os_i2c_write_byte(0x0);  // command mode
+
+   const u8 cmd_start[] = {
+    0x40,0,0xd2,4,
+    0xa8,1,  //mux 1 
+    
+    0x40//+62
+    // , 0xe3,0xe3  // move line
+  };
+
+ const u8 cmd_end[] = {
+     0x24, 0,
+    0,
+    0/* clear*/,
+    0,
+    0, 127,
+
+ };      
+
+  SEND_CMD(cmd_start);
+
+//note: x and y are swapped to get better organization of the line
+
+
+
+  minx=y1;
+  if(y2<minx)minx=y2;
+  if(y3<minx)minx=y3;
+  maxx=y1;
+  if(y2>maxx)maxx=y2;
+  if(y3>maxx)maxx=y3;
+
+
+  s8 signx1,signx2,dx1,dy1,dx2,dy2;
+  u8 e1,e2;
+  // Sort vertices
+  if (y1>y2) 
+  { 
+    swapu8(y1,y2); 
+    swapu8(x1,x2); 
+  }
+  if (y1>y3) 
+  { 
+    swapu8(y1,y3); 
+    swapu8(x1,x3); 
+  }
+  if (y2>y3) 
+  { 
+    swapu8(y2,y3); 
+    swapu8(x2,x3); 
+  }
+
+  t1x=x1;
+  t2x=x1; 
+  
+  y=y1;   // Starting points
+
+  dx1 = (s8)(x2 - x1); 
+  if(dx1<0) 
+  { 
+    dx1=-dx1; 
+    signx1=-1; 
+  } 
+  else 
+    signx1=1;
+  dy1 = (s8)(y2 - y1);
+  
+  dx2 = (s8)(x3 - x1); 
+  if(dx2<0) 
+  { 
+    dx2=-dx2; 
+    signx2=-1; 
+  } 
+  else signx2=1;
+  
+  dy2 = (s8)(y3 - y1);
+  
+  if (dy1 > dx1) 
+  {   // swap values
+    swapu8(dx1,dy1);
+    change|=1;// = true;
+  }
+  if (dy2 > dx2) 
+  {   // swap values
+    swapu8(dy2,dx2);
+    change|=2;// = true;
+  }
+  
+  e2 = (u8)(dx2>>1);
+  // Flat top, just process the second half
+  if(y1==y2) goto next;
+  
+  e1 = (u8)(dx1>>1);
+  
+  for (u8 i = 0; i < dx1;) 
+  {
+    t1xp=0; t2xp=0;
+    if(t1x<t2x) 
+    { 
+      minx=t1x; 
+      maxx=t2x; 
+    }
+    else    
+    { 
+      minx=t2x; 
+      maxx=t1x; 
+    }
+    // process first line until y value is about to change
+    while(i<dx1) 
+    {
+      i++;
+      e1 += dy1;
+      while (e1 >= dx1) 
+      {
+        e1 -= dx1;
+        if (change&1) 
+          t1xp=signx1;
+        else          
+          goto next1;
+      }
+      if (change&1) break;
+      
+      t1x += signx1;
+    }
+    // Move line
+    next1:
+    // process second line until y value is about to change
+    while (1) 
+    {
+      e2 += dy2;
+      while (e2 >= dx2) {
+        e2 -= dx2;
+        if (change&2) 
+          t2xp=signx2;
+        else          
+          goto next2;
+      }
+      if (change&2)
+        break;
+      t2x += signx2;
+    }
+    next2:
+
+    if(minx>t1x) minx=t1x; 
+    if(minx>t2x) minx=t2x;
+    if(maxx<t1x) maxx=t1x; 
+    if(maxx<t2x) maxx=t2x;
+    //*/
+    
+    HLINE(minx, y, maxx - minx, c);
+//    _vline(minx,y, maxx, c,linebuffer);    // Draw line from min to max points found on the y
+  //  if(y==terminate_line)return;
+    // Now increase y
+    if(!(change&1)) t1x += signx1;
+    t1x+=t1xp;
+    if(!(change&2)) t2x += signx2;
+    t2x+=t2xp;
+    y += 1;
+    if(y==y2) break;
+    
+  }
+  next:
+  // Second half
+  dx1 = (s8)(x3 - x2); 
+  if(dx1<0) 
+  { 
+    dx1=-dx1; 
+    signx1=-1; 
+  } 
+  else 
+    signx1=1;
+  dy1 = (s8)(y3 - y2);
+  t1x=x2;
+  
+  if (dy1 > dx1) 
+  {   // swap values
+    swapu8(dy1,dx1);
+    change|=1;// = true;
+  } 
+  else 
+    change&=2;//false;
+  
+  e1 = (u8)(dx1>>1);
+  
+  for (u8 i = 0; i<=dx1; i++) 
+  {
+    t1xp=0; t2xp=0;
+    if(t1x<t2x) 
+    { 
+      minx=t1x; 
+      maxx=t2x; 
+    }
+    else    
+    { 
+      minx=t2x; 
+      maxx=t1x; 
+    }
+    // process first line until y value is about to change
+    while(i<dx1) {
+      e1 += dy1;
+      while (e1 >= dx1) 
+      {
+        e1 -= dx1;
+        if (change&1) 
+        { 
+          t1xp=signx1; 
+          break; 
+        }
+        else          
+          goto next3;
+      }
+      if (change&1) 
+        break;
+      
+      t1x += signx1;
+      if(i<dx1) i++;
+    }
+    next3:
+    // process second line until y value is about to change
+    while (t2x!=x3) 
+    {
+      e2 += dy2;
+      while (e2 >= dx2) 
+      {
+        e2 -= dx2;
+        if(change&2) 
+          t2xp=signx2;
+        else          
+          goto next4;
+      }
+      if (change&2)     
+        break;
+      
+      t2x += signx2;
+    }
+    next4:
+
+    if(minx>t1x) minx=t1x; 
+    if(minx>t2x) minx=t2x;
+    if(maxx<t1x) maxx=t1x; 
+    if(maxx<t2x) maxx=t2x;
+//  */
+    
+    HLINE(minx, y, maxx - minx, c);
+    
+    
+    // Now increase y
+    if(!(change&1)) t1x += signx1;
+    t1x+=t1xp;
+    if(!(change&2)) t2x += signx2;
+    t2x+=t2xp;
+    y += 1;
+    if (y > y3){
+             SEND_CMD(cmd_end);
+            os_i2c_stop();
+    __3d_accept_error=eterm_backup;//=__3d_accept_error;
+ 
+      return;
+    }
+  }
+  SEND_CMD(cmd_end);
+  os_i2c_stop();
+  __3d_accept_error=eterm_backup;
+}
+
+
+
+void VectoscopeTriangle(s16 x1, s16 y1, s16 x2, s16 y2, s16 x3, s16 y3, u8 c,u8 quality)
 {
 //  cli();
+
+
+  
+  ___gpu_hline_is_black=1;// it was cleared at the end of the last triangle so we can assume this
 
   if (x2 < 0)return;
   if (x2 > 126)return;
@@ -1974,6 +2649,15 @@ void VectoscopeTriangle(s16 x1, s16 y1, s16 x2, s16 y2, s16 x3, s16 y3, u8 c)
   if (x1 > 126)return;
   if (y1 < 0)return;
   if (y1 > 62)return;
+
+  
+    const u8 eterm_backup=__3d_accept_error;
+  s16 eterm=eterm_backup;
+  eterm-=quality;
+  if (eterm<0)eterm=0;
+  __3d_accept_error=eterm;
+
+  
   os_i2c_start();
   os_i2c_write_byte(SSD1306_ADDRESS);
   os_i2c_write_byte(0x0);  // command mode
@@ -1983,14 +2667,17 @@ void VectoscopeTriangle(s16 x1, s16 y1, s16 x2, s16 y2, s16 x3, s16 y3, u8 c)
     0x40,0,0xd2,4,
     0xa8,1,  //mux 1 
     
-    0x81,255,
     0x40//+62
     // , 0xe3,0xe3  // move line
   };
 
  const u8 cmd_end[] = {
- 
-    0x81,255,
+     0x24, 0,
+    0,
+    0/* clear*/,
+    0,
+    0, 127,
+
  };      
   
 
@@ -2236,13 +2923,15 @@ next4:
     y += 1;
     if (y > y3){
              SEND_CMD(cmd_end);
-  
+            os_i2c_stop();
+    __3d_accept_error=eterm_backup;//=__3d_accept_error;
  
       return;
     }
     }
                SEND_CMD(cmd_end);
-
+              os_i2c_stop();
+              __3d_accept_error=eterm_backup;
   }
   
          
