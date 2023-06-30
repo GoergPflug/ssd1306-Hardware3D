@@ -864,9 +864,9 @@ GfxApiSetDisplayUndocumentedD2(4);
 sei();
     }
     char tmp[256];
-    sprintf (tmp,"Quality:%d Contract:%d Expand:%d Clear:%d Single Pixel:%d Equal:%d fall:%d", qsum, row_contract,row_expand,row_clear,row_single_pixel_move, row_equal, row_fallthroug);
+//    sprintf (tmp,"Quality:%d Contract:%d Expand:%d Clear:%d Single Pixel:%d Equal:%d fall:%d", qsum, row_contract,row_expand,row_clear,row_single_pixel_move, row_equal, row_fallthroug);
     
-    Serial.println(tmp);
+  //  Serial.println(tmp);
     __3d_accept_error=1;
     memset(cnts,0,sizeof(cnts));
     qsum=0;

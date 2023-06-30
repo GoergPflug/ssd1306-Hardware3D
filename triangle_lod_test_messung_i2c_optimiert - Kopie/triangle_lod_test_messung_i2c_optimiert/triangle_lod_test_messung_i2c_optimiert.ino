@@ -782,14 +782,18 @@ GfxApiSetDisplayUndocumentedD2(4);
   {
     float a=i/256.0;
     a*=6.28318530718;
-    sintab128[i]=63*(1.0+sin(a));
+    sintab128[i]=31*(1.0+sin(a));
   }
 
   Display(0, 0, 0, 0); //console,cat_tiles+chunk*128*8);
 
+    static u16 cnts[512];
   int charge2=0;
   for(;;)
   {
+    int qsum=0;
+    for (int r=0;;r++)  
+    {
     GfxApiSetDisplayMux(1);
     long long start=millis();
 
@@ -801,23 +805,34 @@ GfxApiSetDisplayUndocumentedD2(4);
     //nr+=cnt>>6;
       nr=1;
 
-    static u16 cnts[256];
-    for(int i=0;i<256;i++)cnts[i]+=77+29*i;
-    
-      
-    for(int i=0;i<5 ;i++){
+    for(int i=0;i<512;i++)cnts[i]+=50+i;
+    for(int i=0;i<6;i++){
     
     VectoscopeTriangle(
+
+
+      sintab128[cnts[i*9+6]/256]+sintab128[cnts[i*9+0]/256],
+      sintab128[cnts[i*9+1]/256],
       
-      sintab128[cnts[i*6+0]/256],
-      sintab128[cnts[i*6+1]/256]/2,
+      sintab128[cnts[i*9+7]/256]+sintab128[cnts[i*9+2]/256],
+      sintab128[cnts[i*6+3]/256],
       
-      sintab128[cnts[i*6+2]/256],
-      sintab128[cnts[i*6+3]/256]/2,
+      sintab128[cnts[i*9+8]/256]+sintab128[cnts[i*9+4]/256],
+      sintab128[cnts[i*9+5]/256],
+      i&1?1:1
       
-      sintab128[cnts[i*6+4]/256],
-      sintab128[cnts[i*6+5]/256]/2,
-      1
+      
+      /*
+      sintab128[cnts[i*9+6]/256]+sintab128[cnts[i*9+0]/256],
+      sintab128[cnts[i*9+1]/256],
+      
+      sintab128[cnts[i*9+7]/256]+sintab128[cnts[i*9+2]/256],
+      sintab128[cnts[i*6+3]/256],
+      
+      sintab128[cnts[i*9+8]/256]+sintab128[cnts[i*9+4]/256],
+      sintab128[cnts[i*9+5]/256],
+      i&1?1:2
+      */
       );
    
     
@@ -831,13 +846,22 @@ GfxApiSetDisplayUndocumentedD2(4);
     int fps=1000/_time;
 
     //if((cnt&0xf)==0)
-    if(fps<18)
+    if(fps<30)
       __3d_accept_error++;else if(__3d_accept_error>1) __3d_accept_error--;
 //    Serial.println(_time);
    // Serial.println(fps);
    if(__3d_accept_error>20)__3d_accept_error=20;
+   qsum+=__3d_accept_error;
     os_i2c_stop();
 sei();
+    }
+    char tmp[256];
+    sprintf (tmp,"Quality:%d Contract:%d Expand:%d Clear:%d Single Pixel:%d Equal:%d fall:%d", qsum, row_contract,row_expand,row_clear,row_single_pixel_move, row_equal, row_fallthroug);
+    
+    Serial.println(tmp);
+    __3d_accept_error=1;
+    memset(cnts,0,sizeof(cnts));
+    qsum=0;
   
   }
 
